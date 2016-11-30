@@ -1,10 +1,10 @@
-//Setup web server and socket
+//Setup web server 
 var twitter = require('twitter'),
     express = require('express'),
     app = express(),
     http = require('http'),
     server = http.createServer(app),
-    io = require('socket.io').listen(server);
+
 var moment = require('moment');
 //Setup twitter stream api
 var twit = new twitter({
