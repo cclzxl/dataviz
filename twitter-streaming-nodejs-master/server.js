@@ -21,8 +21,24 @@ server.listen(process.env.PORT || 8081);
 //Setup rotuing for app
 app.use(express.static(__dirname + '/public'));
 
+//read emoji data
+var fs = require('fs');
+var emoji_data = JSON.parse(fs.readFileSync(__dirname + '/public/data/emoji_data.json', 'utf8'));
+//console.log(emoji_data.data);
 
-
+//tweet emoji track list
+var track_list = "";
+for (var i = 0; i < emoji_data.data.length; i++) {
+    var surrogate_pair = emoji_data.data[i].surrogate_pair;
+    if(i!=emoji_data.data.length-1)
+    {
+      track_list += surrogate_pair + ",";
+    }else{
+      track_list += surrogate_pair;
+    }
+    console.log(surrogate_pair);
+}
+var filter = {"track":track_list};
 /* connection mongoDB*/
 var MongoClient = require('mongodb').MongoClient
     , format = require('util').format;
@@ -34,16 +50,11 @@ MongoClient.connect('mongodb://127.0.0.1:27017/tweets', function (err, db) {
         console.log("successfully connected to the database");       
         var collection = db.collection('tweets');
 
-        
         /*twitter streaming begin */
-        //Create web sockets connection.
-        io.sockets.on('connection', function (socket) {
-
-          socket.on("start tweets", function() {
-
-            if(stream === null) {
-              //Connect to twitter stream passing in filter for entire world.
-              twit.stream('statuses/filter', {'track':'\u2764\uFE0F'}, function(stream) {
+          var filter = {'track':'\uD83D\uDE1A'};
+         
+              //Connect to twitter stream passing in filter emoji patterns
+              twit.stream('statuses/filter',filter , function(stream) {
                   stream.on('data', function(data) {
                   var tweet = {};
                   tweet.created_at = data.created_at;
@@ -143,14 +154,7 @@ MongoClient.connect('mongodb://127.0.0.1:27017/tweets', function (err, db) {
                       });
                   });
               });
-            }
-          });
-
-            // Emits signal to the client telling them that the
-            // they are connected and can start receiving Tweets
-            socket.emit("connected");
-        });
-        /*twitter streaming end */
+            
     }
     
 });
