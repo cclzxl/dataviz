@@ -5,7 +5,7 @@ var twitter = require('twitter'),
     http = require('http'),
     server = http.createServer(app),
     io = require('socket.io').listen(server);
-
+var moment = require('moment');
 //Setup twitter stream api
 var twit = new twitter({
   consumer_key: 'DLuB6zCCJ1ZkusXwSEkCEvIvd',
@@ -57,7 +57,10 @@ MongoClient.connect('mongodb://127.0.0.1:27017/tweets', function (err, db) {
               twit.stream('statuses/filter',filter , function(stream) {
                   stream.on('data', function(data) {
                   var tweet = {};
-                  tweet.created_at = data.created_at;
+                  var date = moment(data.created_at,"ddd MMM DD HH:mm:ss Z YYYY");
+                  tweet.day = date.date();
+                  tweet.month = (date.month() + 1) % 12;
+                  tweet.year = date.year();
                   tweet.text = data.text;
                   if(data.hasOwnProperty("user"))
                   {
