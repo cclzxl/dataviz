@@ -1,7 +1,7 @@
 {
   "name": "twitter-streaming-node",
   "version": "0.0.1",
-  "author": "stewartatsafe",
+  "author": "NgocBich&Cheng",
   "private": true,
   "scripts": {
     "start": "node app"
@@ -11,7 +11,7 @@
     "twitter": "*",
     "moment": "*"
   },
-  "description": "twitter-streaming-nodejs ========================",
+  "description": "track emojis in twitter streaming",
   "main": "server.js",
   "license": "ISC"
 }

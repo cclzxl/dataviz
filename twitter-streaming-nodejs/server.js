@@ -38,10 +38,10 @@ for (var i = 0; i < emoji_data.data.length; i++) {
     }
     console.log(surrogate_pair);
 }
-var filter = {"track":track_list};
+var filter = {"track":track_list,"locations":"-180,-90,180,90"};
 /* connection mongoDB*/
-var MongoClient = require('mongodb').MongoClient
-    , format = require('util').format;
+var MongoClient = require('mongodb').MongoClient;
+//format = require('util').format;
 MongoClient.connect('mongodb://127.0.0.1:27017/tweets', function (err, db) {
     if (err) {
         throw err;
@@ -51,17 +51,23 @@ MongoClient.connect('mongodb://127.0.0.1:27017/tweets', function (err, db) {
         var collection = db.collection('tweets');
 
         /*twitter streaming begin */
-          var filter = {'track':'\uD83D\uDE1A'};
          
               //Connect to twitter stream passing in filter emoji patterns
               twit.stream('statuses/filter',filter , function(stream) {
                   stream.on('data', function(data) {
+                  //create tweet object
                   var tweet = {};
+                  //parse twitter timestamp
                   var date = moment(data.created_at,"ddd MMM DD HH:mm:ss Z YYYY");
                   tweet.day = date.date();
                   tweet.month = (date.month() + 1) % 12;
                   tweet.year = date.year();
+                  tweet.hour = date.hour();
+                  tweet.minute = date.minute();
+                  tweet.second = date.second();
+                  //tweet text
                   tweet.text = data.text;
+                  //user name
                   if(data.hasOwnProperty("user"))
                   {
                     if(data.user.hasOwnProperty("screen_name"))
@@ -77,72 +83,53 @@ MongoClient.connect('mongodb://127.0.0.1:27017/tweets', function (err, db) {
                     }
                   }
                   
-                  if(data.coordinates)
+                  if(data.hasOwnProperty("coordinates"))
                   {
-                    if( data.coordinates!=null)
+                    if( data.coordinates!==null)
                     {
-                        tweet.lat = data.coordinates.coordinates[0];
-                        tweet.lng = data.coordinates.coordinates[1];
-                    }
-                  }else if(data.place)
-                  {
-                            if(data.place.bounding_box === 'Polygon'){
-                            // Calculate the center of the bounding box for the tweet
-                            var coord, _i, _len;
-                            var centerLat = 0;
-                            var centerLng = 0;
-
-                            for (_i = 0, _len = coords.length; _i < _len; _i++) {
-                              coord = coords[_i];
-                              centerLat += coord[0];
-                              centerLng += coord[1];
-                            }
-                            centerLat = centerLat / coords.length;
-                            centerLng = centerLng / coords.length;
-
-                            tweet.lat = centerLat;
-                            tweet.lng = centerLng;
-
+                        tweet.lat = data.coordinates.coordinates[1];
+                        tweet.lng = data.coordinates.coordinates[0];
+                    }else if(data.hasOwnProperty("place"))
+                    {
+                      if(data.place!==null)
+                      {
+                        if(data.place.bounding_box.type == "Polygon")
+                        {
+                          var polygon = data.place.bounding_box.coordinates;
+                          var lats = [];
+                          var lngs = [];
+                          for(var i=0; i< polygon.length ;i++)
+                          {
+                              lats.push(0);
+                              lngs.push(0);
+                              for(var j=0; j<polygon[i].length;j++)
+                              {
+                                lats[i] += polygon[i][j][1];
+                                lngs[i] += polygon[i][j][0];
+                              }
+                              lats[i] = lats[i] / j;
+                              lngs[i] = lngs[i] / j;
                           }
+                          tweet.lat = 0;
+                          tweet.lng = 0;
+                          for(var k=0;k<i;k++)
+                          {
+                            tweet.lat += lats[k];
+                            tweet.lng += lngs[k];
+                          }
+                          tweet.lat = tweet.lat /i;
+                          tweet.lng = tweet.lng /i;
+                        }
+                      }
+                    }
                   }
+                  console.log(tweet);
                     collection.insert(tweet, {w:1}, function(err, docs) {
                       if(err)
                         throw err;
-                       console.log("err:" + err + " ,docs:"  + JSON.stringify(docs));
+                       //console.log("err:" + err + " ,docs:"  + JSON.stringify(docs));
                     });
 
-                      if (data.coordinates){
-                        if (data.coordinates !== null){
-                          //If so then build up some nice json and send out to web sockets
-                          var outputPoint = {"lat": data.coordinates.coordinates[0],"lng": data.coordinates.coordinates[1]};
-
-                          socket.broadcast.emit("twitter-stream", outputPoint);
-
-                          //Send out to web sockets channel.
-                          socket.emit('twitter-stream', outputPoint);
-                        }
-                        else if(data.place){
-                          if(data.place.bounding_box === 'Polygon'){
-                            // Calculate the center of the bounding box for the tweet
-                            var coord, _i, _len;
-                            var centerLat = 0;
-                            var centerLng = 0;
-
-                            for (_i = 0, _len = coords.length; _i < _len; _i++) {
-                              coord = coords[_i];
-                              centerLat += coord[0];
-                              centerLng += coord[1];
-                            }
-                            centerLat = centerLat / coords.length;
-                            centerLng = centerLng / coords.length;
-
-                            // Build json object and broadcast it
-                            var outputPoint = {"lat": centerLat,"lng": centerLng};
-                            socket.broadcast.emit("twitter-stream", outputPoint);
-
-                          }
-                        }
-                      }
                       stream.on('limit', function(limitMessage) {
                         return console.log(limitMessage);
                       });
