@@ -13,7 +13,7 @@ var map = function(){
   {
     if(this.text.indexOf(keys[i])>-1)
     {
-       emit(key[i],1);
+       emit(keys[i],1);
     }
   }
 }
