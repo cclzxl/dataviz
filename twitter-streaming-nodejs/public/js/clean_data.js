@@ -22,5 +22,5 @@ var reduce = function(key, values){
   values.forEach(function(v){ res += 1});
   return {frequence};
 }
-
-db.tweets.mapReduce(map, reduce, { out: "emoji_frequence" });
+//load(localhost:8081/js/clean_data.js)
+//db.tweets.mapReduce(map, reduce, { out: "emoji_frequence" });
