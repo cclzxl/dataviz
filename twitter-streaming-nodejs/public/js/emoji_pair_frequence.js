@@ -29,7 +29,8 @@ var keys = ["\uD83D\uDE01","\uD83D\uDE02","\uD83D\uDE03","\uD83D\uDE04","\uD83D\
         {
             for(var j=i+1; j<indexs.length;j++)
             {
-                emit({pair: keys[i] + ',' + keys[j]},Math.min(emoji_freq[i],emoji_freq[j]));
+                var count = Math.min(emoji_freq[ indexs[i] ],emoji_freq[ indexs[j] ]);
+                emit({pair: keys[i] + ',' + keys[j]},count);
             }
         }
     }
