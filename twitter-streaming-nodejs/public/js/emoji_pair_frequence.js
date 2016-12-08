@@ -9,41 +9,45 @@ var keys = ["\uD83D\uDE01","\uD83D\uDE02","\uD83D\uDE03","\uD83D\uDE04","\uD83D\
             "\uD83D\uDE35","\uD83D\uDE37","\uD83D\uDE38","\uD83D\uDE39","\uD83D\uDE3A","\uD83D\uDE3B",
             "\uD83D\uDE3C","\uD83D\uDE3D","\uD83D\uDE3E","\uD83D\uDE3F","\uD83D\uDE40","\uD83D\uDE48",
             "\uD83D\uDE49","\uD83D\uDE4A","\uD83D\uDE4F"];  
+  //emoji_freq{index in keys:frequence}
+  var emoji_freq = {};
   if(this.text!= null)
   {
-    //search for emoji
+    
     for(var i=0;i<keys.length;i++)
     {        
         if( this.text.indexOf(keys[i]) != -1)
         {
-            for(var j=i+1;j<keys.length;j++)
+            if(!emoji_freq.hasOwnProperty(i))
             {
-                 if( this.text.indexOf(keys[j]) != -1)
-                 {
-                    emit({id: keys[i] + ',' + keys[j]},1);
-                 }
-                
+                emoji_freq[i] = 1;
+            }else{
+                emoji_freq[i] +=1;
+            }
+        }        
+    }
+    var indexs = Object.keys(emoji_freq); 
+    //emit key pairs
+    if(indexs.length > 1)
+    {
+        for(var i=0; i<indexs.length;i++)
+        {
+            for(var j=i+1; j<indexs.length;j++)
+            {
+                emit({pair: keys[i] + ',' + keys[j]},1);
             }
         }
-        break;
     }
   }
+
 }
 var reduce = function(key, values){
   var frequence = 0;
   values.forEach(function(v){ frequence += v});
   return frequence;
 }
-/*load( "/root/dataviz/twitter-streaming-nodejs/public/js/clean_data.js");
-db.tweets.mapReduce(map,reduce,{out:"emoji_frequence"});
+/*load( "/root/dataviz/twitter-streaming-nodejs/public/js/emji_pair_frequence.js");
+db.tweets.mapReduce(map,reduce,{out:"emji_pair_frequence"});
 {
-        "result" : "emoji_frequence",
-        "timeMillis" : 49452,
-        "counts" : {
-                "input" : 3169085,
-                "emit" : 1663869,
-                "reduce" : 138334,
-                "output" : 51
-        },
-        "ok" : 1
+    
 }*/
