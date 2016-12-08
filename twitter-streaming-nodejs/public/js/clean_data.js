@@ -6,7 +6,7 @@ var keys = ["\uD83D\uDE01","\uD83D\uDE02","\uD83D\uDE03","\uD83D\uDE04","\uD83D\
             "\uD83D\uDE2B","\uD83D\uDE2D","\uD83D\uDE30","\uD83D\uDE31","\uD83D\uDE32","\uD83D\uDE33",
             "\uD83D\uDE35","\uD83D\uDE37","\uD83D\uDE38","\uD83D\uDE39","\uD83D\uDE3A","\uD83D\uDE3B",
             "\uD83D\uDE3C","\uD83D\uDE3D","\uD83D\uDE3E","\uD83D\uDE3F","\uD83D\uDE40","\uD83D\uDE48",
-            "\uD83D\uDE49","\uD83D\uDE4A","\uD83D\uDE4F"]
+            "\uD83D\uDE49","\uD83D\uDE4A","\uD83D\uDE4F"];
 var map = function(){
   
   for(var i=0;i<keys.lenth;i++)
@@ -22,5 +22,5 @@ var reduce = function(key, values){
   values.forEach(function(v){ res += 1});
   return {frequence};
 }
-//load(localhost:8081/js/clean_data.js)
+//load( "/root/dataviz/twitter-streaming-nodejs/public/js/clean_data.js")
 //db.tweets.mapReduce(map, reduce, { out: "emoji_frequence" });
