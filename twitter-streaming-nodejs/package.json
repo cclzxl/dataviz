@@ -9,7 +9,8 @@
   "dependencies": {
     "express": "*",
     "twitter": "*",
-    "moment": "*"
+    "moment": "*",
+    "mongodb":"*"
   },
   "description": "track emojis in twitter streaming",
   "main": "server.js",
