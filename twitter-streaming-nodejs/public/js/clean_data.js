@@ -9,9 +9,9 @@ var keys = ["\uD83D\uDE01","\uD83D\uDE02","\uD83D\uDE03","\uD83D\uDE04","\uD83D\
             "\uD83D\uDE35","\uD83D\uDE37","\uD83D\uDE38","\uD83D\uDE39","\uD83D\uDE3A","\uD83D\uDE3B",
             "\uD83D\uDE3C","\uD83D\uDE3D","\uD83D\uDE3E","\uD83D\uDE3F","\uD83D\uDE40","\uD83D\uDE48",
             "\uD83D\uDE49","\uD83D\uDE4A","\uD83D\uDE4F"];  
-  for(var i=0;i<keys.lenth;i++)
+  for(var i=0;i<keys.length;i++)
   {
-    if(this.text.indexOf(keys[i])>-1)
+    if(this.text!= null && this.text.indexOf(keys[i]) != -1)
     {
        emit(keys[i],1);
     }
