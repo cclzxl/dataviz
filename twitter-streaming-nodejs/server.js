@@ -37,6 +37,7 @@ for (var i = 0; i < emoji_data.data.length; i++) {
     }
     console.log(surrogate_pair);
 }
+console.log(tracklist);
 var filter = {"track":track_list,"locations":"-180,-90,180,90"};
 /* connection mongoDB*/
 var MongoClient = require('mongodb').MongoClient;
