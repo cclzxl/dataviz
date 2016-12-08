@@ -15,7 +15,8 @@ var keys = ["\uD83D\uDE01","\uD83D\uDE02","\uD83D\uDE03","\uD83D\uDE04","\uD83D\
     {
       if( this.text.indexOf(keys[i]) != -1)
       {
-        emit(keys[i],1);
+        var count =  this.text.split(keys[i]).length -1;
+        emit(keys[i],count);
       }
     }
   }

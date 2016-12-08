@@ -18,12 +18,7 @@ var keys = ["\uD83D\uDE01","\uD83D\uDE02","\uD83D\uDE03","\uD83D\uDE04","\uD83D\
     {        
         if( this.text.indexOf(keys[i]) != -1)
         {
-            if(!emoji_freq.hasOwnProperty(i))
-            {
-                emoji_freq[i] = 1;
-            }else{
-                emoji_freq[i] +=1;
-            }
+            emoji_freq[i] = this.text.split(keys[i]).length -1;
         }        
     }
     var indexs = Object.keys(emoji_freq); 
