@@ -65,8 +65,9 @@ var svg = d3.select("body").append("svg")
 
 // load the data
 d3.json("http://cheng2.me/mongo/tweets/emoji_frequence/?find", function(error, data) {
+    
     data = data.rows;
-});
+
 	
   // scale the range of the data
   x.domain(data.map(function(d) { return d._id; }));
@@ -78,10 +79,8 @@ d3.json("http://cheng2.me/mongo/tweets/emoji_frequence/?find", function(error, d
       .attr("transform", "translate(0," + height + ")")
       .call(xAxis)
     .selectAll("text")
-      .style("text-anchor", "end")
-      .attr("dx", "-.8em")
-      .attr("dy", "-.55em")
-      .attr("transform", "rotate(-90)" );
+      .style("text-anchor", "middle")
+      .attr("dy", ".55em");
 
   svg.append("g")
       .attr("class", "y axis")
@@ -104,7 +103,7 @@ d3.json("http://cheng2.me/mongo/tweets/emoji_frequence/?find", function(error, d
       .attr("y", function(d) { return y(d.value); })
       .attr("height", function(d) { return height - y(d.value); });
 
-
+});
 </script>
 
 </body>
