@@ -31,25 +31,24 @@ var simulation = d3.forceSimulation()
 //load data
 d3.queue()
   .defer(d3.json, "http://cheng2.me/data/emoji_data.json")
+  .defer(d3.json, "http://cheng2.me/mongo/tweets/emoji_frequence/?find")
   .defer(d3.json, "http://cheng2.me/mongo/tweets/emoji_pair_frequence/?find")
   .await(processData); 
 function processData(error,emoji_list,emoji_pair_frequence)
 {
-    console.log(emoji_list);
-}
-d3.json("http://cheng2.me/mongo/tweets/emoji_pair_frequence/?find", function(error, data) {
     if (error) 
         throw error;
     var graph = {nodes:[],links:[]};
-    //parse data to graph
-    data.rows.forEach(function(d){
+    //parse emoji nodes
+    emoji_list.rows.map(function(d) { graph.nodes.push( d._id) }); 
+    //parse emoji pair to graph link
+    emoji_pair_frequence.rows.forEach(function(d){
         var nodes = d._id.pair.split(',');
         var source = nodes[0];
         var target = nodes[1];
         graph.links.push({"source":source, 
                     "target":target,
-                    "value",d.value});
-
+                    "value":d.value});
     });
     
 
@@ -93,7 +92,7 @@ d3.json("http://cheng2.me/mongo/tweets/emoji_pair_frequence/?find", function(err
         .attr("cx", function(d) { return d.x; })
         .attr("cy", function(d) { return d.y; });
   }
-});
+}
 
 function dragstarted(d) {
   if (!d3.event.active) simulation.alphaTarget(0.3).restart();

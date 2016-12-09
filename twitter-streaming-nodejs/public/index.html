@@ -65,10 +65,7 @@ var svg = d3.select("body").append("svg")
 
 // load the data
 d3.json("http://cheng2.me/mongo/tweets/emoji_frequence/?find", function(error, data) {
-    
     data = data.rows;
-
-	
   // scale the range of the data
   x.domain(data.map(function(d) { return d._id; }));
   y.domain([0, d3.max(data, function(d) { return d.value; })]);
