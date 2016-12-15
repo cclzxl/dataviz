@@ -23,7 +23,6 @@ var svg = d3.select("svg"),
     height = svg.attr("height") - margin.top - margin.bottom,
     g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-var parseTime = d3.timeParse("%d/%m/%Y");
 
 var x = d3.scaleTime().range([0, width]),
     y = d3.scaleLinear().range([height, 0]),
@@ -34,26 +33,51 @@ var line = d3.line()
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.frequence); });
 
-d3.json("http://cheng2.me/mongo/tweets/emoji_day_frequence/?find", type, function(error, data) {
+d3.json("http://cheng2.me/mongo/tweets/emoji_day_frequence/?find", function(error, data) {
   if (error) throw error;
 
-  var emojis = data.map(function(id) {
+    var emojis = data.rows.map(function(d) {
     return {
-      id: data._id,
-      values: data.map(function(d) {
-        return {date: parseDateJson(d._id.day), frequence: d.value};
-      })
-    };
-  });
-
-  x.domain(d3.extent(data, function(d) { return d.date; }));
+      id: d._id.emoji,
+      value: 
+        {"date": parseDateJson(d._id.day), "frequence": d.value}
+      };
+    });
+  
+    var emoji_date_frequence_obj = {};
+    emojis.map(function(d){
+        if(emoji_date_frequence_obj.hasOwnProperty(d.id))
+        {
+          emoji_date_frequence_obj[d.id].push(d.value);
+        }else
+        {
+          emoji_date_frequence_obj[d.id] = [];
+        }
+    });
+    
+    var emoji_date_frequence = [];
+    for(var key in emoji_date_frequence_obj)
+    {
+      emoji_date_frequence.push({"id":key,"values":emoji_date_frequence_obj[key]});
+    }
+    function sortByDateAscending(a,b)
+    {
+      return a.date - b.date;
+    }
+    //sort values by date
+     for(var i=0;i<emoji_date_frequence.length;i++)
+    {
+      emoji_date_frequence[i].values.sort(sortByDateAscending);
+    }
+    
+  x.domain(d3.extent(emoji_date_frequence[0].values,function(d){return d.date;}));
 
   y.domain([
-    d3.min(emojis, function(c) { return d3.min(c.values, function(d) { return d.frequence; }); }),
-    d3.max(emojis, function(c) { return d3.max(c.values, function(d) { return d.frequence; }); })
+    d3.min(emoji_date_frequence, function(c) { return d3.min(c.values, function(d) { return d.frequence; }); }),
+    d3.max(emoji_date_frequence, function(c) { return d3.max(c.values, function(d) { return d.frequence; }); })
   ]);
 
-  z.domain(emojis.map(function(c) { return c.id; }));
+  z.domain(emoji_date_frequence.map(function(c) { return c.id; }));
 
   g.append("g")
       .attr("class", "axis axis--x")
@@ -70,10 +94,10 @@ d3.json("http://cheng2.me/mongo/tweets/emoji_day_frequence/?find", type, functio
       .attr("fill", "#000")
       .text("Frequence");
 
-  var emoji = g.selectAll(".city")
-    .data(emojis)
+  var emoji = g.selectAll(".emoji")
+    .data(emoji_date_frequence)
     .enter().append("g")
-      .attr("class", "city");
+      .attr("class", "emoji");
 
   emoji.append("path")
       .attr("class", "line")
@@ -82,21 +106,20 @@ d3.json("http://cheng2.me/mongo/tweets/emoji_day_frequence/?find", type, functio
 
   emoji.append("text")
       .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
-      .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.temperature) + ")"; })
+      .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.frequence) + ")"; })
       .attr("x", 3)
       .attr("dy", "0.35em")
       .style("font", "10px sans-serif")
       .text(function(d) { return d.id; });
 });
 
-function type(d, _, columns) {
-  d.date = parseTime(d.date);
-  for (var i = 1, n = columns.length, c; i < n; ++i) d[c = columns[i]] = +d[c];
-  return d;
-}
+var parseTime = d3.timeParse("%d/%m/%Y");
 
-function parseDateJson(var date)
+function parseDateJson( date)
 {
-    return date.day + '/' + date.month + '/' + date.year;
+    if(date.month ==0)
+        date.month =12;
+     var date_str = date.day + '/' + date.month + '/' + date.year;
+     return parseTime(date_str);
 }
 </script>

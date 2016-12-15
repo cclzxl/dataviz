@@ -16,23 +16,19 @@ var keys = ["\uD83D\uDE01","\uD83D\uDE02","\uD83D\uDE03","\uD83D\uDE04","\uD83D\
       if( this.text.indexOf(keys[i]) != -1)
       {
         var count =  this.text.split(keys[i]).length -1;
-        emit(keys[i],{day:{"year":this.year,"month": this.month, "day":this.day}, "count": count});
+        emit({"emoji":keys[i],"day":{"year":this.year, "month":this.month, "day":this.day}}, count);
       }
     }
   }
 }
 var reduce = function(key, values){
-  var frequence = 0;
-  var days = new Object();
+  var res = 0;
   values.forEach(function(v){ 
-      if(days.hasOwnProperty(v.day))
-      {
-          days[v.day] += v.count;
-      }
+      res += v;
   });
   
-  return frequence;
+  return res;
 }
 /*load( "/root/dataviz/twitter-streaming-nodejs/public/js/emoji_day_frequence.js");
 db.tweets.mapReduce(map,reduce,{out:"emoji_day_frequence"});
-
+*/
