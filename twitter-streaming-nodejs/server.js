@@ -129,7 +129,6 @@ MongoClient.connect('mongodb://127.0.0.1:27017/tweets', function (err, db) {
 
                     if(tweet.text !=null && tweet.text.indexOf("\uD83D") > -1)
                     {
-                      console.log(tweet);
                       collection.insert(tweet, {w:1}, function(err, docs) {
                         if(err)
                           throw err;
