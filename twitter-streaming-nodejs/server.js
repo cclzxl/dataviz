@@ -27,6 +27,7 @@ var emoji_data = JSON.parse(fs.readFileSync(__dirname + '/public/data/emoji_data
 
 //tweet emoji track list
 var track_list = "";
+var emojis =[];
 for (var i = 0; i < emoji_data.data.length; i++) {
     var surrogate_pair = emoji_data.data[i].surrogate_pair;
     if(i!=emoji_data.data.length-1)
@@ -35,6 +36,7 @@ for (var i = 0; i < emoji_data.data.length; i++) {
     }else{
       track_list += surrogate_pair;
     }
+    emojis.push(surrogate_pair);
     console.log(surrogate_pair);
 }
 
@@ -124,12 +126,18 @@ MongoClient.connect('mongodb://127.0.0.1:27017/tweets', function (err, db) {
                     }
                   }
                   
-                    collection.insert(tweet, {w:1}, function(err, docs) {
-                      if(err)
-                        throw err;
-                       //console.log("err:" + err + " ,docs:"  + JSON.stringify(docs));
-                    });
 
+                    if(tweet.text !=null && tweet.text.indexOf("\uD83D") > -1)
+                    {
+                      console.log(tweet);
+                      collection.insert(tweet, {w:1}, function(err, docs) {
+                        if(err)
+                          throw err;
+                        //console.log("err:" + err + " ,docs:"  + JSON.stringify(docs));
+                      });
+                      
+                    }
+                  
                       stream.on('limit', function(limitMessage) {
                         return console.log(limitMessage);
                       });
