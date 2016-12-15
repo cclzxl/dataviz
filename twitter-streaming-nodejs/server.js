@@ -123,7 +123,7 @@ MongoClient.connect('mongodb://127.0.0.1:27017/tweets', function (err, db) {
                       }
                     }
                   }
-                  console.log(tweet);
+                  
                     collection.insert(tweet, {w:1}, function(err, docs) {
                       if(err)
                         throw err;
