@@ -42,8 +42,8 @@ var reduce = function(key, values){
   values.forEach(function(v){ frequence += v});
   return frequence;
 }
-/*load( "/root/dataviz/twitter-streaming-nodejs/public/js/emji_pair_frequence.js");
-db.tweets.mapReduce(map,reduce,{out:"emji_pair_frequence"});
+/*load( "/root/dataviz/twitter-streaming-nodejs/public/js/emoji_pair_frequence.js");
+db.tweets.mapReduce(map,reduce,{out:"emoji_pair_frequence"});
 {
     
 }*/

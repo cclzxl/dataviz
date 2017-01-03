@@ -87,7 +87,9 @@ function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
     .data(graph.links)
     .enter().append("line")
       .attr("stroke-width", function(d) { return 5; })
-      .attr("stroke",function(d) {return link_color(d.value);});
+      .attr("stroke",function(d) {
+        return link_color(d.value);
+      });
       
   var node = svg.append("g")
     .attr("class", "nodes")
@@ -98,8 +100,8 @@ function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
       .attr("xlink:href", function(d) { return d.img; })
       //.attr("x", "10px")
       //.attr("y", "10px")
-      .attr("width", function(d) {return 24*d.frequence/100000;})
-      .attr("height",function(d) {return 24*d.frequence/100000;})
+      .attr("width", function(d) {return 72;})
+      .attr("height",function(d) {return 72;})
       .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
