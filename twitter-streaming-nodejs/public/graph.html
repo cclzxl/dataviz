@@ -80,7 +80,25 @@ function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
       i++;
     });
     link_color.domain([min_value,max_value]);
-
+  //remove infrequent nodes
+  for(var i=0; i<graph.nodes.length;i++)
+  {
+    var emoji = graph.nodes.id;
+    //if emoji is frequent or not
+    var flag = false;
+    for(var j=0; j<graph.links.length;j++)
+    {
+        if(graph.links[j].source.indexOf(emoji) > -1 || graph.links[j].target.indexOf(emoji) > -1)
+        {
+          flag = true;
+          break; 
+        }
+    }
+    if(!flag)
+    {
+      graph.nodes.splice(i,1);
+    }
+  }
   var link = svg.append("g")
       .attr("class", "links")
     .selectAll("line")
