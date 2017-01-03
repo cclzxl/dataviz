@@ -22,10 +22,12 @@ var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height");
 
+var manyBody = d3.forceManyBody().distanceMin(500).strength(-5000);
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody())
+    .force("charge", manyBody)
     .force("center", d3.forceCenter(width / 2, height / 2));
+
     
 var link_color = d3.scaleLinear().range(['red','blue']);
 //load data
@@ -83,12 +85,12 @@ function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
   //remove infrequent nodes
   for(var i=0; i<graph.nodes.length;i++)
   {
-    var emoji = graph.nodes.id;
+    var emoji = graph.nodes[i].id;
     //if emoji is frequent or not
     var flag = false;
     for(var j=0; j<graph.links.length;j++)
     {
-        if(graph.links[j].source.indexOf(emoji) > -1 || graph.links[j].target.indexOf(emoji) > -1)
+        if(graph.links[j].source === emoji || graph.links[j].target === emoji)
         {
           flag = true;
           break; 
@@ -97,6 +99,7 @@ function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
     if(!flag)
     {
       graph.nodes.splice(i,1);
+      i= (i-1 >0)? i-1:0 ;
     }
   }
   var link = svg.append("g")
