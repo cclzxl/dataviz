@@ -3,7 +3,7 @@
 
 <head>
 	<style>
-
+  /* style for bar chart*/
   .bar{
     fill: steelblue;
   }
@@ -22,7 +22,16 @@
 	  stroke: #000;
 	  shape-rendering: crispEdges;
 	}
+  /* style for ngram*/
+  .axis--x path {
+    display: none;
+  }
 
+  .line {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+  }
 	</style>
 </head>
 
@@ -36,19 +45,16 @@ var margin = {top: 20, right: 20, bottom: 70, left: 60},
     width = 800 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
+// set the bar chart ranges
+var x_bar = d3.scaleBand().rangeRound([0, width]).padding(0.5);
 
-// set the ranges
-var x = d3.scaleBand().rangeRound([0, width]).padding(0.5);
+var y_bar = d3.scaleLinear().range([height, 0]);
 
-var y = d3.scaleLinear().range([height, 0]);
+// define the bar chart axis
+var xAxis_bar = d3.axisBottom(x)
 
-// define the axis
-var xAxis = d3.axisBottom(x)
-
-
-var yAxis = d3.axisLeft(y)
+var yAxis_bar = d3.axisLeft(y)
     .ticks(10);
-
 
 // add the bar section and SVG element
 var bar = d3.select("body").append("section").attr("id","bar_section")
@@ -58,31 +64,38 @@ var bar = d3.select("body").append("section").attr("id","bar_section")
     .append("g")
     .attr("transform", 
           "translate(" + margin.left + "," + margin.top + ")");
-
+//add ngram section and SVG element
+var ngram = d3d3.select("body").append("section").attr("id","ngram_section")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom);
+    g = ngram.append("g").attr("transform", "translate(" + margin.left + "," + (margin.top 
+    + d3.select("#bar_section").node().getBoundingClientRect().height)+ ")");
 //load data
 d3.queue()
   .defer(d3.json, "http://cheng2.me/data/emoji_data.json")
   .defer(d3.json, "http://cheng2.me/mongo/tweets/emoji_frequence/?find")
+  .defer(d3.json, "http://cheng2.me/mongo/tweets/emoji_day_frequence/?find")
   .defer(d3.json, "http://cheng2.me/mongo/tweets/emoji_pair_frequence/?find")
   .await(processData); 
-function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
+function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emoji_pair_frequence)
 {
-      // scale the range of the data
-  x.domain(emoji_frequence.rows.map(function(d) { return d._id; }));
-  y.domain([0, d3.max(emoji_frequence.rows, function(d) { return d.value; })]);
+  // scale the range of the emoji frequence data (for barchart)
+  x_bar.domain(emoji_frequence.rows.map(function(d) { return d._id; }));
+  y_bar.domain([0, d3.max(emoji_frequence.rows, function(d) { return d.value; })]);
 
-  // add axis
+  // add x axis for bar chart
   bar.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
-      .call(xAxis)
+      .call(xAxis_bar)
     .selectAll("text")
       .style("text-anchor", "middle")
       .attr("dy", ".55em");
-
+// add y axis for bar chart
   bar.append("g")
       .attr("class", "y axis")
-      .call(yAxis)
+      .call(yAxis_bar)
     .append("text")
       .attr("transform", "rotate(-90)")
       .attr("y", 5)
@@ -90,15 +103,112 @@ function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
       .style("text-anchor", "end")
       .text("Frequency");
 
-
   // Add bar chart
   bar.selectAll("bar")
       .data(emoji_frequence.rows)
     .enter().append("rect")
       .attr("class", "bar")
-      .attr("x", function(d) { return x(d._id); })
-      .attr("width", x.bandwidth())
-      .attr("y", function(d) { return y(d.value); })
-      .attr("height", function(d) { return height - y(d.value); });
+      .attr("x", function(d) { return x_bar(d._id); })
+      .attr("width", x_bar.bandwidth())
+      .attr("y", function(d) { return y_bar(d.value); })
+      .attr("height", function(d) { return height - y_bar(d.value); });
+
+  //-------------ngram begin--------------------
+  var x = d3.scaleTime().range([0, width]),
+    y = d3.scaleLinear().range([height, 0]),
+    z = d3.scaleOrdinal(d3.schemeCategory10);
+
+  var line = d3.line()
+      .curve(d3.curveBasis)
+      .x(function(d) { return x(d.date); })
+      .y(function(d) { return y(d.frequence); });
+  //parse emoji day frequence data
+  var emojis = emoji_day_frequence.rows.map(function(d) {
+    return {
+      id: d._id.emoji,
+      value: 
+        {"date": parseDateJson(d._id.day), "frequence": d.value}
+      };
+    });
+  
+    var emoji_date_frequence_obj = {};
+    emojis.map(function(d){
+        if(emoji_date_frequence_obj.hasOwnProperty(d.id))
+        {
+          emoji_date_frequence_obj[d.id].push(d.value);
+        }else
+        {
+          emoji_date_frequence_obj[d.id] = [];
+        }
+    });
+    
+    var emoji_date_frequence = [];
+    for(var key in emoji_date_frequence_obj)
+    {
+      emoji_date_frequence.push({"id":key,"values":emoji_date_frequence_obj[key]});
+    }
+    function sortByDateAscending(a,b)
+    {
+      return a.date - b.date;
+    }
+    //sort values by date
+     for(var i=0;i<emoji_date_frequence.length;i++)
+    {
+      emoji_date_frequence[i].values.sort(sortByDateAscending);
+    }
+    
+  x.domain(d3.extent(emoji_date_frequence[0].values,function(d){return d.date;}));
+
+  y.domain([
+    d3.min(emoji_date_frequence, function(c) { return d3.min(c.values, function(d) { return d.frequence; }); }),
+    d3.max(emoji_date_frequence, function(c) { return d3.max(c.values, function(d) { return d.frequence; }); })
+  ]);
+
+  z.domain(emoji_date_frequence.map(function(c) { return c.id; }));
+
+  g.append("g")
+      .attr("class", "axis axis--x")
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x));
+
+  g.append("g")
+      .attr("class", "axis axis--y")
+      .call(d3.axisLeft(y))
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", "0.71em")
+      .attr("fill", "#000")
+      .text("Frequence");
+
+  var emoji = g.selectAll(".emoji")
+    .data(emoji_date_frequence)
+    .enter().append("g")
+      .attr("class", "emoji");
+
+  emoji.append("path")
+      .attr("class", "line")
+      .attr("d", function(d) { return line(d.values); })
+      .style("stroke", function(d) { return z(d.id); });
+
+  emoji.append("text")
+      .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
+      .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.frequence) + ")"; })
+      .attr("x", 3)
+      .attr("dy", "0.35em")
+      .style("font", "10px sans-serif")
+      .text(function(d) { return d.id; });
+  //-------------ngram end----------------------  
+ 
 }
+//time parser util
+ var parseTime = d3.timeParse("%d/%m/%Y");
+
+  function parseDateJson( date)
+  {
+      if(date.month ==0)
+          date.month =12;
+      var date_str = date.day + '/' + date.month + '/' + date.year;
+      return parseTime(date_str);
+  }  
 </script>
