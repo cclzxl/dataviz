@@ -80,6 +80,14 @@ var graph_svg = d3.select("body").append("section").attr("id","graph_section")
     .append("g")
     .attr("transform", 
           "translate(" + margin.left + "," + margin.top + ")");
+var manyBody = d3.forceManyBody().distanceMin(500).strength(-5000);
+var simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(function(d) { return d.id; }))
+    .force("charge", manyBody)
+    .force("center", d3.forceCenter(width / 2, height / 2));
+
+    
+var link_color = d3.scaleLinear().range(['red','blue']);
 //load data
 d3.queue()
   .defer(d3.json, "http://cheng2.me/data/emoji_data.json")
