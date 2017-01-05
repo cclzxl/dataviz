@@ -8,10 +8,6 @@
     fill: steelblue;
   }
 
-  .bar:hover{
-    fill: brown;
-  }
-
 	.axis {
 	  font: 10px sans-serif;
 	}
@@ -40,6 +36,8 @@
 <script src="http://d3js.org/d3.v4.min.js"></script>
 <script src="https://d3js.org/d3-queue.v3.min.js"></script>
 <script>
+//emojis selected by user
+var selects = [];
 // set the dimensions of the canvas
 var margin = {top: 20, right: 20, bottom: 70, left: 60},
     width = 800 - margin.left - margin.right,
@@ -51,9 +49,9 @@ var x_bar = d3.scaleBand().rangeRound([0, width]).padding(0.5);
 var y_bar = d3.scaleLinear().range([height, 0]);
 
 // define the bar chart axis
-var xAxis_bar = d3.axisBottom(x)
+var xAxis_bar = d3.axisBottom(x_bar)
 
-var yAxis_bar = d3.axisLeft(y)
+var yAxis_bar = d3.axisLeft(y_bar)
     .ticks(10);
 
 // add the bar section and SVG element
@@ -64,13 +62,7 @@ var bar = d3.select("body").append("section").attr("id","bar_section")
     .append("g")
     .attr("transform", 
           "translate(" + margin.left + "," + margin.top + ")");
-//add ngram section and SVG element
-var ngram = d3d3.select("body").append("section").attr("id","ngram_section")
-    .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom);
-    g = ngram.append("g").attr("transform", "translate(" + margin.left + "," + (margin.top 
-    + d3.select("#bar_section").node().getBoundingClientRect().height)+ ")");
+
 //load data
 d3.queue()
   .defer(d3.json, "http://cheng2.me/data/emoji_data.json")
@@ -104,102 +96,168 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
       .text("Frequency");
 
   // Add bar chart
-  bar.selectAll("bar")
+  var bars = bar.selectAll("bar")
       .data(emoji_frequence.rows)
     .enter().append("rect")
       .attr("class", "bar")
       .attr("x", function(d) { return x_bar(d._id); })
       .attr("width", x_bar.bandwidth())
       .attr("y", function(d) { return y_bar(d.value); })
-      .attr("height", function(d) { return height - y_bar(d.value); });
+      .attr("height", function(d) { return height - y_bar(d.value); })
+      .style("fill",function(d){
+        if(selects.includes(d._id)) 
+          return "brown";})
+      .on("click",function(d){
+        if(selects.includes(d._id))
+        {
+          var index = selects.indexOf(d._id);
+          selects.splice(index,1);
+          console.log("unselect " + d._id);
+        }
+        else
+        {
+          selects.push(d._id);
+          console.log("select " + d._id);
+        }
+        update();
+      })
+      .on("mouseover", function(d) {
+          if(selects.includes(d._id)) 
+          {
+            d3.select(this)
+              .style("fill","brown")
+              .attr("width", x_bar.bandwidth() + 3);
+          }else
+          {
+            d3.select(this)
+              .style("fill","BlueViolet")
+              .attr("width", x_bar.bandwidth() + 3)
+              .attr("x", function(d) { return (x_bar(d._id) - 1.5) ; });
+          }
+      })                  
+      .on("mouseout", function(d) {
+         if(selects.includes(d._id)) 
+          {
+            d3.select(this)
+              .style("fill","brown")
+              .attr("width", x_bar.bandwidth() + 3);
+          }else
+          {
+            d3.select(this)
+              .style("fill","steelblue")
+              .attr("width", x_bar.bandwidth())
+              .attr("x", function(d) { return x_bar(d._id); });
+          }
+      });
 
   //-------------ngram begin--------------------
-  var x = d3.scaleTime().range([0, width]),
-    y = d3.scaleLinear().range([height, 0]),
-    z = d3.scaleOrdinal(d3.schemeCategory10);
-
-  var line = d3.line()
-      .curve(d3.curveBasis)
-      .x(function(d) { return x(d.date); })
-      .y(function(d) { return y(d.frequence); });
-  //parse emoji day frequence data
-  var emojis = emoji_day_frequence.rows.map(function(d) {
-    return {
-      id: d._id.emoji,
-      value: 
-        {"date": parseDateJson(d._id.day), "frequence": d.value}
-      };
-    });
-  
-    var emoji_date_frequence_obj = {};
-    emojis.map(function(d){
-        if(emoji_date_frequence_obj.hasOwnProperty(d.id))
+  function draw_ngram()
+  {   //remove last svg
+      d3.select("#ngram_section").remove();
+      
+      //add ngram section and SVG element
+    var ngram = d3.select("body").append("section").attr("id","ngram_section")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+    var  g = ngram.append("g").attr("transform", 
+              "translate(" + margin.left + "," + margin.top + ")");
+          
+      if(selects.length<1)
+        return;
+      var x = d3.scaleTime().range([0, width]),
+        y = d3.scaleLinear().range([height, 0]),
+        z = d3.scaleOrdinal(d3.schemeCategory10);
+    
+      var line = d3.line()
+          .curve(d3.curveBasis)
+          .x(function(d) { return x(d.date); })
+          .y(function(d) { return y(d.frequence); });
+      //parse emoji day frequence data
+      var emoji_date_frequence_obj = {};
+      emoji_day_frequence.rows.map(function(d) {
+        if( selects.includes(d._id.emoji) )
         {
-          emoji_date_frequence_obj[d.id].push(d.value);
-        }else
-        {
-          emoji_date_frequence_obj[d.id] = [];
+          if(emoji_date_frequence_obj.hasOwnProperty(d._id.emoji))
+            {
+              var value = {"date": parseDateJson(d._id.day), "frequence": d.value};
+              emoji_date_frequence_obj[d._id.emoji].push(value);
+            }else
+            {
+              emoji_date_frequence_obj[d._id.emoji] = [];
+            }         
         }
-    });
+      });
+      
+        
+        var emoji_date_frequence = [];
+        for(var key in emoji_date_frequence_obj)
+        {
+          emoji_date_frequence.push({"id":key,"values":emoji_date_frequence_obj[key]});
+        }
+        function sortByDateAscending(a,b)
+        {
+          return a.date - b.date;
+        }
+        //sort values by date
+         for(var i=0;i<emoji_date_frequence.length;i++)
+        {
+          emoji_date_frequence[i].values.sort(sortByDateAscending);
+        }
+        
+      x.domain(d3.extent(emoji_date_frequence[0].values,function(d){return d.date;}));
     
-    var emoji_date_frequence = [];
-    for(var key in emoji_date_frequence_obj)
-    {
-      emoji_date_frequence.push({"id":key,"values":emoji_date_frequence_obj[key]});
-    }
-    function sortByDateAscending(a,b)
-    {
-      return a.date - b.date;
-    }
-    //sort values by date
-     for(var i=0;i<emoji_date_frequence.length;i++)
-    {
-      emoji_date_frequence[i].values.sort(sortByDateAscending);
-    }
+      y.domain([
+        d3.min(emoji_date_frequence, function(c) { return d3.min(c.values, function(d) { return d.frequence; }); }),
+        d3.max(emoji_date_frequence, function(c) { return d3.max(c.values, function(d) { return d.frequence; }); })
+      ]);
     
-  x.domain(d3.extent(emoji_date_frequence[0].values,function(d){return d.date;}));
-
-  y.domain([
-    d3.min(emoji_date_frequence, function(c) { return d3.min(c.values, function(d) { return d.frequence; }); }),
-    d3.max(emoji_date_frequence, function(c) { return d3.max(c.values, function(d) { return d.frequence; }); })
-  ]);
-
-  z.domain(emoji_date_frequence.map(function(c) { return c.id; }));
-
-  g.append("g")
-      .attr("class", "axis axis--x")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x));
-
-  g.append("g")
-      .attr("class", "axis axis--y")
-      .call(d3.axisLeft(y))
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", "0.71em")
-      .attr("fill", "#000")
-      .text("Frequence");
-
-  var emoji = g.selectAll(".emoji")
-    .data(emoji_date_frequence)
-    .enter().append("g")
-      .attr("class", "emoji");
-
-  emoji.append("path")
-      .attr("class", "line")
-      .attr("d", function(d) { return line(d.values); })
-      .style("stroke", function(d) { return z(d.id); });
-
-  emoji.append("text")
-      .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
-      .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.frequence) + ")"; })
-      .attr("x", 3)
-      .attr("dy", "0.35em")
-      .style("font", "10px sans-serif")
-      .text(function(d) { return d.id; });
+      z.domain(emoji_date_frequence.map(function(c) { return c.id; }));
+    
+      g.append("g")
+          .attr("class", "axis axis--x")
+          .attr("transform", "translate(0," + height + ")")
+          .call(d3.axisBottom(x));
+    
+      g.append("g")
+          .attr("class", "axis axis--y")
+          .call(d3.axisLeft(y))
+        .append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("y", 6)
+          .attr("dy", "0.71em")
+          .attr("fill", "#000")
+          .text("Frequence");
+    
+      var emoji = g.selectAll(".emoji")
+        .data(emoji_date_frequence)
+        .enter().append("g")
+          .attr("class", "emoji");
+    
+      emoji.append("path")
+          .attr("class", "line")
+          .attr("d", function(d) { return line(d.values); })
+          .style("stroke", function(d) { return z(d.id); });
+    
+      emoji.append("text")
+          .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
+          .attr("transform", function(d) { return "translate(" + x(d.value.date) + "," + y(d.value.frequence) + ")"; })
+          .attr("x", 3)
+          .attr("dy", "0.35em")
+          .style("font", "10px sans-serif")
+          .text(function(d) { return d.id; });
+  }
   //-------------ngram end----------------------  
- 
+  //update selections
+  function update()
+  {
+      //update bar chart
+      bars.style("fill",function(d){
+        if(selects.includes(d._id)) 
+          return "brown";});
+      //update ngram
+      draw_ngram();
+  }
 }
 //time parser util
  var parseTime = d3.timeParse("%d/%m/%Y");
@@ -211,4 +269,6 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
       var date_str = date.day + '/' + date.month + '/' + date.year;
       return parseTime(date_str);
   }  
+  
+
 </script>
