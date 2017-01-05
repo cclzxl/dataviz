@@ -30,7 +30,6 @@
   }
 /*style for graph*/
   .links line {
-  stroke: #999;
   stroke-opacity: 0.6;
 }
 
@@ -53,6 +52,22 @@ var margin = {top: 20, right: 20, bottom: 70, left: 60},
     width = 800 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
+// add the graph section and SVG element
+var graph_svg = d3.select("body").append("section").attr("id","graph_section")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom + 200)
+    .append("g")
+    .attr("transform", 
+          "translate(" + margin.left + "," + (margin.top + 100) + ")");
+var manyBody = d3.forceManyBody().distanceMin(500).strength(-5000);
+var simulation = d3.forceSimulation()
+    .force("link", d3.forceLink().id(function(d) { return d.id; }))
+    .force("charge", manyBody)
+    .force("center", d3.forceCenter(width / 2, height / 2));
+
+var link_color = d3.scaleLinear().range(['red','blue']);
+
 // set the bar chart ranges
 var x_bar = d3.scaleBand().rangeRound([0, width]).padding(0.5);
 
@@ -72,22 +87,7 @@ var bar = d3.select("body").append("section").attr("id","bar_section")
     .append("g")
     .attr("transform", 
           "translate(" + margin.left + "," + margin.top + ")");
-// add the graph section and SVG element
-var graph_svg = d3.select("body").append("section").attr("id","graph_section")
-    .append("svg")
-    .attr("width", 1280)
-    .attr("height", 960)
-    .append("g")
-    .attr("transform", 
-          "translate(" + margin.left + "," + margin.top + ")");
-var manyBody = d3.forceManyBody().distanceMin(500).strength(-5000);
-var simulation = d3.forceSimulation()
-    .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", manyBody)
-    .force("center", d3.forceCenter(width / 2, height / 2));
 
-    
-var link_color = d3.scaleLinear().range(['red','blue']);
 //load data
 d3.queue()
   .defer(d3.json, "http://cheng2.me/data/emoji_data.json")
@@ -341,9 +341,9 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
     .selectAll("line")
     .data(graph.links)
     .enter().append("line")
-      .attr("stroke-width", function(d) { return 5; })
+      .attr("stroke-width", function(d) { return 3; })
       .attr("stroke",function(d) {
-        return link_color(d.value);
+        return "#999";
       });
       
   var node = graph_svg.append("g")
@@ -358,9 +358,24 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
       .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
-          .on("end", dragended));
+          .on("end", dragended))
+      .on("click", function(d){
+          if(selects.includes(d.id))
+          {
+            var index = selects.indexOf(d.id);
+            selects.splice(index,1);
+            console.log("unselect " + d.id);
+          }
+          else
+          {
+            selects.push(d.id);
+            console.log("select " + d.id);
+          }
+          update();
+      });
   node.append("title")
       .text(function(d) { return d.id; });
+      
   
   simulation
       .nodes(graph.nodes)
@@ -391,6 +406,25 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
           return "brown";});
       //update ngram
       draw_ngram();
+      //update graph    
+      link.attr("stroke-width", function(d) {
+        if(selects.includes(d.source.id) || selects.includes(d.target.id))
+        { 
+          return 5; 
+        }else
+        {
+          return 3;
+        }
+      })
+      .attr("stroke",function(d) {
+        if(selects.includes(d.source.id) || selects.includes(d.target.id))
+        {
+           return "DodgerBlue";
+        }else
+        {
+          return "#999";
+        }
+      });
   }
 }
 //time parser util
