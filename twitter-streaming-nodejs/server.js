@@ -4,6 +4,7 @@ var twitter = require('twitter'),
     app = express(),
     http = require('http'),
     server = http.createServer(app);
+var restApi = require('./router.js');
 var moment = require('moment');
 //Setup twitter stream api
 var twit = new twitter({
@@ -19,7 +20,7 @@ server.listen(process.env.PORT || 8081);
 
 //Setup rotuing for app
 app.use(express.static(__dirname + '/public'));
-
+app.use("/rest",restApi );
 //read emoji data
 var fs = require('fs');
 var emoji_data = JSON.parse(fs.readFileSync(__dirname + '/public/data/emoji_data.json', 'utf8'));
