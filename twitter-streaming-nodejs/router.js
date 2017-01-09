@@ -3,10 +3,13 @@ var router = express.Router();
 var http = require("http");
 
 router.get('/tweets', function(req, res, next) {
-    var query =  '/tweets/tweets/';
+    var query =  '/tweets/';
     if(req.query.count)
     {
         query += '$cmd/?filter_count=tweets&limit=1';
+    }else
+    {
+        query +=  'tweets/';
     }
     var options = 
     {
