@@ -33,8 +33,8 @@ var link_color = d3.scaleLinear().range(['red','blue']);
 //load data
 d3.queue()
   .defer(d3.json, "http://cheng2.me/data/emoji_data.json")
-  .defer(d3.json, "http://cheng2.me/mongo/tweets/emoji_frequence/?find")
-  .defer(d3.json, "http://cheng2.me/mongo/tweets/emoji_pair_frequence/?find")
+  .defer(d3.json, "http://cheng2.me/rest/emoji_frequence")
+  .defer(d3.json, "http://cheng2.me/rest/emoji_pair_frequence")
   .await(processData); 
 function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
 {

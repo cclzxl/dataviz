@@ -33,7 +33,7 @@ var line = d3.line()
     .x(function(d) { return x(d.date); })
     .y(function(d) { return y(d.frequence); });
 
-d3.json("http://cheng2.me/mongo/tweets/emoji_day_frequence/?find", function(error, data) {
+d3.json("http://cheng2.me/rest/emoji_day_frequence", function(error, data) {
   if (error) throw error;
 
     var emojis = data.rows.map(function(d) {
