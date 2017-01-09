@@ -392,8 +392,8 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
         .attr("y2", function(d) { return d.target.y; });
 
     node
-        .attr("x", function(d) { return d.x; })
-        .attr("y", function(d) { return d.y; });
+        .attr("x", function(d) { return d.x - 32; })
+        .attr("y", function(d) { return d.y - 32; });
   }
   //-------------graph end----------------------
 
