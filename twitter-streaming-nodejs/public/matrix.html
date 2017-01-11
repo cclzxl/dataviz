@@ -18,7 +18,7 @@ text.active {
 
 </style>
 <script src="//d3js.org/d3.v2.min.js" charset="utf-8"></script>
-
+<script src="https://d3js.org/d3-queue.v3.min.js"></script>
 <header>
 </header>
 
@@ -41,6 +41,12 @@ text.active {
 </aside>
 
 <script>
+d3.queue()
+  .defer(d3.json, "http://cheng2.me/data/emoji_data.json")
+  .defer(d3.json, "http://cheng2.me/rest/emoji_frequence")
+  .defer(d3.json, "http://cheng2.me/rest/emoji_day_frequence")
+  .defer(d3.json, "http://cheng2.me/rest/emoji_pair_frequence")
+  .await(processData); 
 
 var margin = {top: 80, right: 0, bottom: 10, left: 80},
     width = 720,
@@ -48,7 +54,7 @@ var margin = {top: 80, right: 0, bottom: 10, left: 80},
 
 var x = d3.scale.ordinal().rangeBands([0, width]),
     z = d3.scale.linear().domain([0, 4]).clamp(true),
-    c = d3.scale.category10().domain(d3.range(10));
+    c = d3.scale.category20().domain(d3.range(10));
 
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -57,37 +63,74 @@ var svg = d3.select("body").append("svg")
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-d3.json("miserables.json", function(miserables) {
-  var matrix = [],
-      nodes = miserables.nodes,
-      n = nodes.length;
+function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emoji_pair_frequence)
+ {
+      //graph object
+    var graph = {nodes:[],links:[]};
+    //parse emoji nodes
+    graph.nodes = (emoji_frequence.rows).map(function(d) { return {"id" : d._id, "count":d.value}; }); 
+    //add emoji icon to node
+    for(var i=0; i< graph.nodes.length;i++)
+    {
+      var id = graph.nodes[i].id;
+      for(var j=0;j<emoji_data.data.length; j++)
+      {
+        if(id == emoji_data.data[j].surrogate_pair)
+        {
+          graph.nodes[i].img = emoji_data.data[j].img;
+          break; 
+        }
+      }
+    }
+    var max_value = -1;
+    var min_value = -1;
+    //parse emoji pair to graph link
+    var i=0;
+    emoji_pair_frequence.rows.forEach(function(d){
+        var nodes = d._id.pair.split(',');
+        var source = nodes[0];
+        var target = nodes[1];
+        if(d.value >100)
+        {
+          graph.links.push({"source":source, 
+                      "target":target,
+                      "value":d.value});
+        }
+      if(i==0)
+      {
+        min_value = d.value;
+      }
+      if(max_value < d.value)
+        max_value = d.value;
+      if(min_value > d.value)
+        min_value = d.value;
+      i++;
+    });
 
+  var matrix = [],
+      nodes = graph.nodes,
+      n = nodes.length;
+  
   // Compute index per node.
   nodes.forEach(function(node, i) {
     node.index = i;
-    node.count = 0;
     matrix[i] = d3.range(n).map(function(j) { return {x: j, y: i, z: 0}; });
   });
 
   // Convert links to matrix; count character occurrences.
-  miserables.links.forEach(function(link) {
-    matrix[link.source][link.target].z += link.value;
-    matrix[link.target][link.source].z += link.value;
-    matrix[link.source][link.source].z += link.value;
-    matrix[link.target][link.target].z += link.value;
-    nodes[link.source].count += link.value;
-    nodes[link.target].count += link.value;
+  graph.links.forEach(function(link) {
+    matrix[link.source][link.target].z = link.value;
+    matrix[link.target][link.source].z+= link.value;
   });
 
   // Precompute the orders.
   var orders = {
-    name: d3.range(n).sort(function(a, b) { return d3.ascending(nodes[a].name, nodes[b].name); }),
-    count: d3.range(n).sort(function(a, b) { return nodes[b].count - nodes[a].count; }),
-    group: d3.range(n).sort(function(a, b) { return nodes[b].group - nodes[a].group; })
+    id: d3.range(n).sort(function(a, b) { return d3.ascending(nodes[a].id, nodes[b].id); }),
+    count: d3.range(n).sort(function(a, b) { return nodes[b].count - nodes[a].count; })
   };
 
   // The default sort order.
-  x.domain(orders.name);
+  x.domain(orders.id);
 
   svg.append("rect")
       .attr("class", "background")
@@ -109,7 +152,7 @@ d3.json("miserables.json", function(miserables) {
       .attr("y", x.rangeBand() / 2)
       .attr("dy", ".32em")
       .attr("text-anchor", "end")
-      .text(function(d, i) { return nodes[i].name; });
+      .text(function(d, i) { return nodes[i].id; });
 
   var column = svg.selectAll(".column")
       .data(matrix)
@@ -125,7 +168,7 @@ d3.json("miserables.json", function(miserables) {
       .attr("y", x.rangeBand() / 2)
       .attr("dy", ".32em")
       .attr("text-anchor", "start")
-      .text(function(d, i) { return nodes[i].name; });
+      .text(function(d, i) { return nodes[i].id; });
 
   function row(row) {
     var cell = d3.select(this).selectAll(".cell")
@@ -136,7 +179,7 @@ d3.json("miserables.json", function(miserables) {
         .attr("width", x.rangeBand())
         .attr("height", x.rangeBand())
         .style("fill-opacity", function(d) { return z(d.z); })
-        .style("fill", function(d) { return nodes[d.x].group == nodes[d.y].group ? c(nodes[d.x].group) : null; })
+        //.style("fill", function(d) { return nodes[d.x].group == nodes[d.y].group ? c(nodes[d.x].group) : null; })
         .on("mouseover", mouseover)
         .on("mouseout", mouseout);
   }
@@ -176,32 +219,9 @@ d3.json("miserables.json", function(miserables) {
     order("group");
     d3.select("#order").property("selectedIndex", 2).node().focus();
   }, 5000);
-});
+}
 
 </script>
 
-<p class="attribution">Source: <a href="http://www-cs-staff.stanford.edu/~uno/sgb.html">The Stanford GraphBase</a>.
 
-<p>A network can be represented by an <i><a href="http://en.wikipedia.org/wiki/Adjacency_matrix">adjacency matrix</a></i>, where each cell <i>ij</i> represents an edge from vertex <i>i</i> to vertex <i>j</i>. Here, vertices represent characters in a book, while edges represent co-occurrence in a chapter.
 
-<p>Given this two-dimensional representation of a graph, a natural visualization is to show the matrix! However, the effectiveness of a matrix diagram is heavily dependent on the order of rows and columns: if related nodes are placed closed to each other, it is easier to identify clusters and bridges.
-
-<p>This example lets you try different orderings via the drop-down menu. This type of diagram can be extended with manual reordering of rows and columns, and expanding or collapsing of clusters, to allow deeper exploration. <a href="http://en.wikipedia.org/wiki/Jacques_Bertin">Jacques Bertin</a> (or more specifically, his fleet of assistants) did this by hand with paper strips.
-
-<p>While path-following is harder in a matrix view than in a <a href="http://mbostock.github.com/d3/ex/force.html">node-link diagram</a>, matrices have other advantages. As networks get large and highly connected, node-link diagrams often devolve into giant hairballs of line crossings. Line crossings are impossible with matrix views. Matrix cells can also be encoded to show additional data; here color depicts clusters computed by a community-detection algorithm.
-
-<p>Want more? See this analysis of <a href="../shuffle/compare.html">shuffling algorithms</a> using matrix diagrams.
-
-<footer>
-  <aside>January 12, 2012</aside>
-  <a href="../" rel="author">Mike Bostock</a>
-</footer>
-
-<script>
-
-GoogleAnalyticsObject = "ga", ga = function() { ga.q.push(arguments); }, ga.q = [], ga.l = +new Date;
-ga("create", "UA-48272912-3", "ocks.org");
-ga("send", "pageview");
-
-</script>
-<script async src="//www.google-analytics.com/analytics.js"></script>
