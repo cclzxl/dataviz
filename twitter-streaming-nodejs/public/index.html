@@ -37,11 +37,35 @@
   stroke: #fff;
   stroke-width: 1.5px;
 }
+
+.inline { 
+    display: inline; 
+}
 	</style>
 </head>
 
 <body>
-	
+  <div id="emoji_cloud">
+      <iframe src="http://cheng2.me/cloud2.html" frameBorder="0" scrolling="no" onload="resizeIframe(this)" ></iframe>
+  </div>
+  <script>
+  function resizeIframe( iFrame ) {
+
+    iFrame.width  = iFrame.contentWindow.document.body.scrollWidth;
+    iFrame.height = iFrame.contentWindow.document.body.scrollHeight;
+}
+  </script>
+  <div id="bar_ngram">
+    <div id="bar_div" class="inline"></div>
+    <div id="ngram_div" class="inline"></div>
+  </div>
+  
+  <div>
+    <div id="graph_div" class="inline"></div>
+    <div id="matrix_div" class="inline">
+       <iframe src="http://cheng2.me/matrix.html" frameBorder="0" scrolling="no" onload="resizeIframe(this)" ></iframe>
+    </div>
+  </div>
 <script src="http://d3js.org/d3.v4.min.js"></script>
 <script src="https://d3js.org/d3-queue.v3.min.js"></script>
 <script>
@@ -53,7 +77,7 @@ var margin = {top: 20, right: 20, bottom: 70, left: 60},
     height = 500 - margin.top - margin.bottom;
 
 // add the graph section and SVG element
-var graph_svg = d3.select("body").append("section").attr("id","graph_section")
+var graph_svg = d3.select("#graph_div")
     .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom + 200)
@@ -80,7 +104,7 @@ var yAxis_bar = d3.axisLeft(y_bar)
     .ticks(10);
 
 // add the bar section and SVG element
-var bar = d3.select("body").append("section").attr("id","bar_section")
+var bar = d3.select("#bar_div")
     .append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
@@ -177,11 +201,11 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
 
   //-------------ngram begin--------------------
   function draw_ngram()
-  {   //remove last svg
-      d3.select("#ngram_section").remove();
+  {   //hide last svg
+      d3.select("#ngram_div").remove();
       
       //add ngram section and SVG element
-    var ngram = d3.select("body").append("section").attr("id","ngram_section")
+    var ngram = d3.select("#bar_ngram").append("div").attr("id","ngram_div").classed("inline", true)
         .append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom);
@@ -275,6 +299,9 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
           .text(function(d) { return d.id; });
   }
   //-------------ngram end----------------------
+  
+  //-------------emoji cloud begin--------------
+  //-------------emoji cloud end--------------
   //-------------graph begin--------------------
       //graph object
     var graph = {nodes:[],links:[]};

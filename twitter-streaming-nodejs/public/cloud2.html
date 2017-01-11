@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>emoji cloud</title>
+    <script src="http://d3js.org/d3.v3.js"></script>
+    <script src="https://d3js.org/d3-queue.v3.min.js"></script>
+    <style type="text/css">
+    </style>
+  </head>
+  <body>
+    <div id="canvas"></div>
+    <script type="text/javascript">
+    var w = 640,
+        h = 480;
+    var canvas = d3.select("#canvas")
+      .append("svg:svg")
+      .attr('width', w)
+      .attr('height', h);
+d3.queue()
+  .defer(d3.json, "http://cheng2.me/data/emoji_data.json")
+  .defer(d3.json, "http://cheng2.me/rest/emoji_frequence")
+  .await(processData); 
+function processData(error,emoji_data,emoji_frequence)
+{
+    if (error) throw error;
+    emoji_frequence.rows;
+    var sizeScale = d3.scale.linear().domain([1,d3.max(emoji_frequence.rows.map(function(d){return d.value;}))]).range([1,100]);
+    var data = {
+      name : "root",
+      children : emoji_frequence.rows.map(function(d){return {"name":d._id, "size": sizeScale(d.value)};})
+      
+    }
+     //add emoji icon to node
+    for(var i=0; i< data.children.length;i++)
+    {
+      var id = data.children[i].name;
+      for(var j=0;j<emoji_data.data.length; j++)
+      {
+        if(id == emoji_data.data[j].surrogate_pair)
+        {
+          data.children[i].img = emoji_data.data[j].img;
+          break; 
+        }
+      }
+    }
+
+
+    var nodes = d3.layout.pack()
+      .value(function(d) { return d.size; })
+      .size([w, h])
+      .nodes(data);
+    
+    // Get rid of root node
+    nodes.shift();
+
+    canvas.selectAll('image')
+        .data(nodes)
+      .enter().append('image')
+	  .attr("xlink:href", function(d) { return d.img; })
+        .attr('x', function(d) { return d.x; })
+        .attr('y', function(d) { return d.y; })
+        .attr('width', function(d) { return d.r; })
+		.attr('height', function(d) { return d.r; })
+        .attr('fill', 'white')
+        .attr('stroke', 'grey');
+}
+    </script>
+  </body>
+</html>

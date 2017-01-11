@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html class="ocks-org do-not-copy">
 <meta charset="utf-8">
-<title>Les Misérables Co-occurrence</title>
+<title>Les emojis Co-occurrence</title>
 <style>
 
 .background {
@@ -85,14 +85,8 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
     node.index = i;
     matrix[i] = d3.range(n).map(function(j) { return {x: j, y: i, z: 0}; });
   });
-
-  // Convert links to matrix; count character occurrences.
-  graph.links.forEach(function(link) {
-    matrix[emoji_index[link.source]][emoji_index[link.target]].z = link.value;
-    matrix[emoji_index[link.target]][emoji_index[link.source]].z= link.value;
-  });
   
-    //parse emoji pair to graph link
+      //parse emoji pair to graph link
     var i=0;
     emoji_pair_frequence.rows.forEach(function(d){
         var nodes = d._id.pair.split(',');
@@ -114,6 +108,14 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
         min_value = d.value;
       i++;
     });
+    
+  // Convert links to matrix; count character occurrences.
+  graph.links.forEach(function(link) {
+    matrix[emoji_index[link.source]][emoji_index[link.target]].z = link.value;
+    matrix[emoji_index[link.target]][emoji_index[link.source]].z= link.value;
+  });
+  
+
 
   
 
@@ -165,8 +167,9 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
       .attr("text-anchor", "start")
       .text(function(d, i) { return nodes[i].id; });
   
-  var colorScale =d3.scale.linear().domain([0,d3.max(graph.nodes.map(function(d){return d.count;}))]).range(["red","blue"]);
+  
   function row(row) {
+  var colorScale =d3.scale.linear().domain([0,d3.max(graph.nodes.map(function(d){return d.count;}))]).range(["red","blue"]);
     var cell = d3.select(this).selectAll(".cell")
         .data(row.filter(function(d) { return d.z; }))
       .enter().append("rect")
@@ -183,7 +186,7 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
               if( (graph.links[i].source == emoji1 && graph.links[i].target == emoji2 )
                     || (graph.links[i].target == emoji1 && graph.links[i].source == emoji2) )
               {
-                  return colorScale(graph.links[i].value);
+                  return c(graph.links[i].value);
               }
             }
             return 0;
