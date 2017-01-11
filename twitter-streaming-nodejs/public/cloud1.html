@@ -10,11 +10,10 @@ var svg = d3.select("svg"),
     width = +svg.attr("width"),
     height = +svg.attr("height");
 
-var manyBody = d3.forceManyBody().distanceMin(500).strength(-5000);
+var manyBody = d3.forceManyBody().distanceMin(50).distanceMax(500).strength(-100);
 var simulation = d3.forceSimulation()
     .force("charge", manyBody)
     .force("center", d3.forceCenter(width / 2, height / 2));
-
 //load data
 d3.queue()
   .defer(d3.json, "http://cheng2.me/data/emoji_data.json")
@@ -28,7 +27,12 @@ function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
     //graph object
     var graph = {nodes:[]};
     //parse emoji nodes
-    graph.nodes = (emoji_frequence.rows).map(function(d) { return {"id" : d._id, "frequence":d.value}; }); 
+    var max_value = 0
+    graph.nodes = (emoji_frequence.rows).map(function(d) { 
+        if(max_value < d.value)
+          max_value = d.value;
+        return {"id" : d._id, "frequence":d.value}; 
+    }); 
     //add emoji icon to node
     for(var i=0; i< graph.nodes.length;i++)
     {
@@ -44,7 +48,7 @@ function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
     }
     
 
-      
+  var sizeScale = d3.scaleLinear().domain([1,max_value]).range([32,256]);  
   var node = svg.append("g")
     .attr("class", "nodes")
     .selectAll("image")
@@ -54,8 +58,8 @@ function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
       .attr("xlink:href", function(d) { return d.img; })
       //.attr("x", "10px")
       //.attr("y", "10px")
-      .attr("width", function(d) {return 72;})
-      .attr("height",function(d) {return 72;})
+      .attr("width", function(d) {return sizeScale(d.frequence);})
+      .attr("height",function(d) {return sizeScale(d.frequence);})
       .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
@@ -67,15 +71,7 @@ function processData(error,emoji_data,emoji_frequence,emoji_pair_frequence)
       .nodes(graph.nodes)
       .on("tick", ticked);
 
-  simulation.force("link")
-      .links(graph.links);
-
   function ticked() {
-    link
-        .attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
 
     node
         .attr("x", function(d) { return d.x - 36; })
