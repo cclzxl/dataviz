@@ -42,26 +42,29 @@
     display: inline; 
 }
 	</style>
-</head>
-
-<body>
-  <div id="emoji_cloud">
-      <iframe src="http://cheng2.me/cloud2.html" frameBorder="0" scrolling="no" onload="resizeIframe(this)" ></iframe>
-  </div>
   <script>
   function resizeIframe( iFrame ) {
 
     iFrame.width  = iFrame.contentWindow.document.body.scrollWidth;
     iFrame.height = iFrame.contentWindow.document.body.scrollHeight;
-}
+  }
   </script>
+</head>
+
+<body>
+  <div>
+    <div id="emoji_cloud" class="inline">
+        <iframe src="http://cheng2.me/cloud2.html" frameBorder="0" scrolling="no" onload="resizeIframe(this)" ></iframe>
+    </div>
+    <div id="graph_div" class="inline"></div>
+ 
+  </div>
   <div id="bar_ngram">
     <div id="bar_div" class="inline"></div>
     <div id="ngram_div" class="inline"></div>
   </div>
   
   <div>
-    <div id="graph_div" class="inline"></div>
     <div id="matrix_div" class="inline">
        <iframe src="http://cheng2.me/matrix.html" frameBorder="0" scrolling="no" onload="resizeIframe(this)" ></iframe>
     </div>
@@ -212,8 +215,8 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
     var  g = ngram.append("g").attr("transform", 
               "translate(" + margin.left + "," + margin.top + ")");
           
-      if(selects.length<1)
-        return;
+      //if(selects.length<1)
+      //  return;
       var x = d3.scaleTime().range([0, width]),
         y = d3.scaleLog().range([height, 0]),
         z = d3.scaleOrdinal(d3.schemeCategory10);
@@ -225,8 +228,8 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
       //parse emoji day frequence data
       var emoji_date_frequence_obj = {};
       emoji_day_frequence.rows.map(function(d) {
-        if( selects.includes(d._id.emoji) )
-        {
+        //if( selects.includes(d._id.emoji) )
+        //{
           if(emoji_date_frequence_obj.hasOwnProperty(d._id.emoji))
             {
               var value = {"date": parseDateJson(d._id.day), "frequence": d.value};
@@ -237,7 +240,7 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
               var value = {"date": parseDateJson(d._id.day), "frequence": d.value};
               emoji_date_frequence_obj[d._id.emoji].push(value);
             }         
-        }
+        //}
       });
       
         
@@ -288,7 +291,52 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
       emoji.append("path")
           .attr("class", "line")
           .attr("d", function(d) { return line(d.values); })
-          .style("stroke", function(d) { return z(d.id); });
+          .style("stroke", function(d) { return z(d.id); })
+          .style("stroke-width",function(d) {return selects.includes(d.id)? 5:1;})
+          .style("stroke-opacity", function(d) {return selects.includes(d.id)? 1:0.5;})
+          .on("click",function(d){
+        if(selects.includes(d.id))
+        {
+          var index = selects.indexOf(d.id);
+          selects.splice(index,1);
+          console.log("unselect " + d.id);
+        }
+        else
+        {
+          selects.push(d._id);
+          console.log("select " + d.id);
+          console.log(selects);
+        }
+        update();
+      })
+      .on("mouseover", function(d) {
+          if(selects.includes(d.id)) 
+          {
+            d3.select(this)
+              .style("stroke-width","5")
+              .attr("stroke-opacity", 1);
+          }else
+          {
+            d3.select(this)
+              .style("stroke-width","3")
+              .attr("stroke-opacity", 0.8);
+          }
+      })                  
+      .on("mouseout", function(d) {
+         if(selects.includes(d.id)) 
+          {
+            d3.select(this)
+              .style("stroke-width","5")
+              .attr("stroke-opacity", 1);
+          }else
+          {
+            d3.select(this)
+              d3.select(this)
+              .style("stroke-width","1")
+              .attr("stroke-opacity", 0.5);
+          }
+      });
+
     
       emoji.append("text")
           .datum(function(d) { return {id: d.id, value: d.values[d.values.length - 1]}; })
@@ -299,9 +347,7 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
           .text(function(d) { return d.id; });
   }
   //-------------ngram end----------------------
-  
-  //-------------emoji cloud begin--------------
-  //-------------emoji cloud end--------------
+  draw_ngram();
   //-------------graph begin--------------------
       //graph object
     var graph = {nodes:[],links:[]};
@@ -412,7 +458,7 @@ function processData(error, emoji_data,emoji_frequence, emoji_day_frequence, emo
 
   simulation.force("link")
       .links(graph.links);
-
+  
   function ticked() {
     link
         .attr("x1", function(d) { return d.source.x; })
